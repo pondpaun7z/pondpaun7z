@@ -6,9 +6,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Added permissions block for safety
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # CRITICAL: This allows the final 'git push' to use your token
+          token: ${{ secrets.GH_TOKEN }}
+
       - name: Generate stats card
         uses: readme-tools/github-readme-stats-action@main
         with:
@@ -16,6 +24,7 @@ jobs:
           options: username=${{ github.repository_owner }}&count_private=true&theme=tokyonight&show_icons=true&rank_icon=github&include_all_commits=true&hide_border=true
           path: profile/stats.svg
           token: ${{ secrets.GH_TOKEN }}
+
       - name: Generate top languages card
         uses: readme-tools/github-readme-stats-action@main
         with:
@@ -23,10 +32,12 @@ jobs:
           options: username=${{ github.repository_owner }}&layout=compact&langs_count=8&theme=tokyonight&hide_border=true
           path: profile/top-langs.svg
           token: ${{ secrets.GH_TOKEN }}
+
       - name: Commit cards
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add profile/*.svg
+          # The '|| exit 0' prevents the action from failing if there are no changes
           git commit -m "Update README cards" || exit 0
           git push
